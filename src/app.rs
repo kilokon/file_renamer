@@ -1,12 +1,24 @@
+#[derive(Debug)]
+struct DirFiles {
+    f_path: String,
+    f_name: String,
+    f_extension: Option<String>,
+}
+
+
+
+
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 // #[derive(Default)]
 pub struct RenamerApp {
     // path_ui_label: ,
     picked_path: String,
+    bbx: bool,
 
     #[serde(skip)]
-    files_in_dir: Vec<std::fs::DirEntry>,
+    files_in_dir: Vec<DirFiles>,
+    // files_in_dir: Vec<std::fs::DirEntry>,
 }
 
 impl Default for RenamerApp {
@@ -14,6 +26,7 @@ impl Default for RenamerApp {
         Self {
             // path_ui_label: " ".into(),
             picked_path: "".into(),
+            bbx: true,
             files_in_dir: Vec::new(),
         }
     }
@@ -32,6 +45,7 @@ impl eframe::App for RenamerApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let Self {
             files_in_dir,
+            bbx,
             picked_path,
         } = self;
         egui::SidePanel::left("left Panel")
@@ -56,14 +70,31 @@ impl eframe::App for RenamerApp {
                             .filter(|f| f.path().is_file())
                             .collect::<Vec<_>>();
                         for files in dir_content {
-                            // println!("{:?}", files.path().extension());
-                            files_in_dir.push(files);
+                            let mut _file = DirFiles{
+                                f_name: String::from(files.file_name().to_str().unwrap()),
+                                f_extension: Some(String::from(files.path().extension().unwrap().to_str().unwrap())),
+                                f_path: String::from(files.path().to_str().unwrap()),
+                            }; 
+                            // println!("{:?}", &_file);
+                            files_in_dir.push(_file);
                         }
                         // println!("{:?}", dir_content);
                     } else {
                         println!("Not a valid path!");
                     }
                 }
+                ui.separator();
+                egui::CollapsingHeader::new("File Extensions").default_open(true).show(ui, |ui|{
+                    ui.horizontal_wrapped(|ui| {
+                        for i in files_in_dir.iter() {
+                            let checkbox_text = i.f_extension.as_ref().unwrap();
+                            ui.checkbox(bbx, checkbox_text);
+
+                            // println!("{:?}", i);
+                            // ui.checkbox(&mut true, i.f_extension.unwrap());
+                        }
+                    });
+                });
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -72,10 +103,10 @@ impl eframe::App for RenamerApp {
                 for i in files_in_dir {
                     // let filename = egui::RichText::i.path().file_name().unwrap().to_str();
                     // ui.label(text)
-                    let m = egui::WidgetText::RichText(egui::RichText::from(
-                        i.path().file_name().unwrap().to_str().expect("msg"),
-                    ));
-                    ui.label(m);
+                    // let m = egui::WidgetText::RichText(egui::RichText::from(
+                    //     i.path().file_name().unwrap().to_str().expect("msg"),
+                    // ));
+                    // ui.label(m);
                 }
             });
         });
